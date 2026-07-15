@@ -22,8 +22,6 @@ const progress = document.getElementById("progress");
 const lessonMemo = document.getElementById("lessonMemo");
 
 let memos = [];
-let memoSource = "local";
-let supabaseClient = null;
 let currentTeacher = loadSession();
 
 init();
@@ -35,8 +33,7 @@ async function init() {
   }
 
   showLoggedIn();
-  await initSupabaseClient();
-  memos = memoSource === "supabase" ? await loadMemosFromSupabase() : loadMemosFromLocalStorage();
+  memos = loadMemosFromLocalStorage();
   renderMemos();
 }
 
@@ -91,22 +88,6 @@ async function buildTeacherKey(name, birth) {
   return [...new Uint8Array(buffer)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-async function initSupabaseClient() {
-  if (!window.supabase) return;
-
-  try {
-    const response = await fetch("/api/config");
-    const config = await response.json();
-
-    if (config.supabaseUrl && config.supabaseAnonKey) {
-      memoSource = "supabase";
-      supabaseClient = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
-    }
-  } catch (error) {
-    console.warn("Failed to load runtime config:", error.message);
-  }
-}
-
 function loadMemosFromLocalStorage() {
   try {
     const scopedKey = `${STORAGE_KEY}:${currentTeacher.teacherKey}`;
@@ -119,31 +100,6 @@ function loadMemosFromLocalStorage() {
 function saveMemosToLocalStorage() {
   const scopedKey = `${STORAGE_KEY}:${currentTeacher.teacherKey}`;
   localStorage.setItem(scopedKey, JSON.stringify(memos));
-}
-
-async function loadMemosFromSupabase() {
-  const { data, error } = await supabaseClient
-    .from("tutoring_memos")
-    .select("*")
-    .eq("teacher_key", currentTeacher.teacherKey)
-    .order("date", { ascending: false })
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.warn("Supabase load failed, falling back to localStorage:", error.message);
-    memoSource = "local";
-    return loadMemosFromLocalStorage();
-  }
-
-  return (data || []).map((row) => ({
-    id: row.id,
-    teacherKey: row.teacher_key,
-    date: row.date,
-    studentName: row.student_name,
-    progress: row.progress,
-    memo: row.memo,
-    createdAt: row.created_at,
-  }));
 }
 
 function escapeHtml(value) {
@@ -259,24 +215,6 @@ async function persistMemo(nextMemo) {
       memo: nextMemo.memo,
       created_at: nextMemo.createdAt,
     }).select().single();
-
-    if (!error && data) {
-      const normalized = {
-        id: data.id,
-        date: data.date,
-        studentName: data.student_name,
-        progress: data.progress,
-        memo: data.memo,
-        createdAt: data.created_at,
-      };
-      memos = [normalized, ...memos].sort((a, b) => b.date.localeCompare(a.date));
-      renderMemos();
-      memoForm.reset();
-      lessonDate.focus();
-      return;
-    }
-    console.warn("Supabase insert failed, using localStorage fallback:", error?.message);
-  }
 
   memos = [nextMemo, ...memos].sort((a, b) => b.date.localeCompare(a.date));
   saveMemosToLocalStorage();
