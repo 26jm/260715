@@ -37,6 +37,21 @@ body {
   gap: 18px;
 }
 
+.login-card {
+  display: grid;
+  gap: 18px;
+  max-width: 620px;
+}
+
+.login-form {
+  max-width: 420px;
+}
+
+.app-content {
+  display: grid;
+  gap: 18px;
+}
+
 .card {
   background: var(--surface-card);
   border: 1px solid var(--hairline);
@@ -128,6 +143,17 @@ h3 {
   font-family: "Courier New", ui-monospace, monospace;
   font-size: 11px;
   line-height: 1.6;
+}
+
+.hero-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.logout-btn {
+  min-width: 140px;
 }
 
 .grid {

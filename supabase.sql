@@ -1,5 +1,6 @@
 create table if not exists public.tutoring_memos (
   id uuid primary key,
+  teacher_key text not null,
   date date not null,
   student_name text not null,
   progress text not null,

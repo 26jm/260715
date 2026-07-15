@@ -1,5 +1,13 @@
 const STORAGE_KEY = "tutoring-helper-memos";
 const API_ENDPOINT = "/api/generate";
+const SESSION_KEY = "tutoring-helper-session";
+
+const loginCard = document.getElementById("loginCard");
+const loginForm = document.getElementById("loginForm");
+const teacherName = document.getElementById("teacherName");
+const teacherBirth = document.getElementById("teacherBirth");
+const appContent = document.getElementById("appContent");
+const logoutBtn = document.getElementById("logoutBtn");
 
 const memoForm = document.getElementById("memoForm");
 const memoList = document.getElementById("memoList");
@@ -16,13 +24,71 @@ const lessonMemo = document.getElementById("lessonMemo");
 let memos = [];
 let memoSource = "local";
 let supabaseClient = null;
+let currentTeacher = loadSession();
 
 init();
 
 async function init() {
+  if (!currentTeacher) {
+    showLoggedOut();
+    return;
+  }
+
+  showLoggedIn();
   await initSupabaseClient();
   memos = memoSource === "supabase" ? await loadMemosFromSupabase() : loadMemosFromLocalStorage();
   renderMemos();
+}
+
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const name = teacherName.value.trim();
+  const birth = teacherBirth.value;
+  if (!name || !birth) return;
+
+  const teacherKey = await buildTeacherKey(name, birth);
+  currentTeacher = { name, birth, teacherKey };
+  localStorage.setItem(SESSION_KEY, JSON.stringify(currentTeacher));
+
+  showLoggedIn();
+  await init();
+});
+
+logoutBtn?.addEventListener("click", () => {
+  localStorage.removeItem(SESSION_KEY);
+  currentTeacher = null;
+  memos = [];
+  memoForm.reset();
+  memoList.innerHTML = "";
+  resultView.innerHTML = "";
+  resultView.appendChild(resultBox);
+  resultBox.textContent = "{}";
+  showLoggedOut();
+});
+
+function showLoggedOut() {
+  loginCard.hidden = false;
+  appContent.hidden = true;
+}
+
+function showLoggedIn() {
+  loginCard.hidden = true;
+  appContent.hidden = false;
+}
+
+function loadSession() {
+  try {
+    return JSON.parse(localStorage.getItem(SESSION_KEY));
+  } catch {
+    return null;
+  }
+}
+
+async function buildTeacherKey(name, birth) {
+  const text = `${name.trim().toLowerCase()}|${birth}`;
+  const buffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(buffer)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 async function initSupabaseClient() {
@@ -43,20 +109,23 @@ async function initSupabaseClient() {
 
 function loadMemosFromLocalStorage() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    const scopedKey = `${STORAGE_KEY}:${currentTeacher.teacherKey}`;
+    return JSON.parse(localStorage.getItem(scopedKey)) || [];
   } catch {
     return [];
   }
 }
 
 function saveMemosToLocalStorage() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(memos));
+  const scopedKey = `${STORAGE_KEY}:${currentTeacher.teacherKey}`;
+  localStorage.setItem(scopedKey, JSON.stringify(memos));
 }
 
 async function loadMemosFromSupabase() {
   const { data, error } = await supabaseClient
     .from("tutoring_memos")
     .select("*")
+    .eq("teacher_key", currentTeacher.teacherKey)
     .order("date", { ascending: false })
     .order("created_at", { ascending: false });
 
@@ -68,6 +137,7 @@ async function loadMemosFromSupabase() {
 
   return (data || []).map((row) => ({
     id: row.id,
+    teacherKey: row.teacher_key,
     date: row.date,
     studentName: row.student_name,
     progress: row.progress,
@@ -167,6 +237,7 @@ memoForm.addEventListener("submit", (event) => {
 
   const nextMemo = {
     id: crypto.randomUUID(),
+    teacherKey: currentTeacher.teacherKey,
     date: lessonDate.value,
     studentName: studentName.value.trim(),
     progress: progress.value.trim(),
@@ -181,6 +252,7 @@ async function persistMemo(nextMemo) {
   if (memoSource === "supabase" && supabaseClient) {
     const { data, error } = await supabaseClient.from("tutoring_memos").insert({
       id: nextMemo.id,
+      teacher_key: nextMemo.teacherKey,
       date: nextMemo.date,
       student_name: nextMemo.studentName,
       progress: nextMemo.progress,
