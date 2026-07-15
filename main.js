@@ -205,17 +205,6 @@ memoForm.addEventListener("submit", (event) => {
 });
 
 async function persistMemo(nextMemo) {
-  if (memoSource === "supabase" && supabaseClient) {
-    const { data, error } = await supabaseClient.from("tutoring_memos").insert({
-      id: nextMemo.id,
-      teacher_key: nextMemo.teacherKey,
-      date: nextMemo.date,
-      student_name: nextMemo.studentName,
-      progress: nextMemo.progress,
-      memo: nextMemo.memo,
-      created_at: nextMemo.createdAt,
-    }).select().single();
-
   memos = [nextMemo, ...memos].sort((a, b) => b.date.localeCompare(a.date));
   saveMemosToLocalStorage();
   renderMemos();
