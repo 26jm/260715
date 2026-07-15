@@ -1,4 +1,9 @@
 {
   "version": 2,
-  "cleanUrls": true
+  "rewrites": [
+    { "source": "/app.js", "destination": "/public/app.js" },
+    { "source": "/api/generate", "destination": "/api/generate.js" },
+    { "source": "/api/config", "destination": "/api/config.js" },
+    { "source": "/", "destination": "/index.html" }
+  ]
 }
