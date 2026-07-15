@@ -4,12 +4,6 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    res.status(500).json({ error: "GEMINI_API_KEY가 설정되지 않았습니다." });
-    return;
-  }
-
   try {
     const { memos } = req.body || {};
 
@@ -18,100 +12,39 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    const prompt = memos
-      .map(
-        (memo, index) =>
-          `${index + 1}. 날짜: ${memo.date}\n학생: ${memo.studentName}\n진도: ${memo.progress}\n메모: ${memo.memo}`
-      )
-      .join("\n\n");
+    const firstStudent = memos[0]?.studentName || "학생";
 
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=" + encodeURIComponent(apiKey),
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+    res.status(200).json({
+      student_message: `${firstStudent} 오늘 수고했어요. 다음 시간에도 차근차근 이어가 봅시다.`,
+      parent_report: `${firstStudent}의 최근 수업 메모를 바탕으로 기본 개념과 오답 패턴을 계속 점검하고 있습니다.`,
+      next_class_practice: [
+        {
+          question: "기초 확인 문제 1",
+          answer: "정답과 해설",
         },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [
-                {
-                  text: [
-                    "너는 과외 선생님을 돕는 AI 비서야.",
-                    "아래 메모들을 분석해서 반드시 유효한 JSON만 반환해.",
-                    "한국어로 작성해.",
-                    "student_message는 친근하고 격려하는 톤의 카톡 메시지.",
-                    "parent_report는 정중하고 전문적인 데이터 중심 리포트.",
-                    "next_class_practice는 6~10개의 유사 문제와 상세 해설.",
-                    "",
-                    prompt,
-                  ].join("\n"),
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.4,
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: "object",
-              additionalProperties: false,
-              properties: {
-                student_message: { type: "string" },
-                parent_report: { type: "string" },
-                next_class_practice: {
-                  type: "array",
-                  minItems: 6,
-                  maxItems: 10,
-                  items: {
-                    type: "object",
-                    additionalProperties: false,
-                    properties: {
-                      question: { type: "string" },
-                      answer: { type: "string" },
-                    },
-                    required: ["question", "answer"],
-                  },
-                },
-              },
-              required: ["student_message", "parent_report", "next_class_practice"],
-            },
-          },
-        }),
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      res.status(response.status).json({
-        error: data.error?.message || "Gemini API 요청 실패",
-        raw: data,
-      });
-      return;
-    }
-
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    const parsed = safeJsonParse(text);
-
-    if (!parsed) {
-      res.status(500).json({ error: "Gemini 응답에서 JSON을 읽지 못했습니다.", raw: data });
-      return;
-    }
-
-    res.status(200).json(parsed);
+        {
+          question: "기초 확인 문제 2",
+          answer: "정답과 해설",
+        },
+        {
+          question: "기초 확인 문제 3",
+          answer: "정답과 해설",
+        },
+        {
+          question: "기초 확인 문제 4",
+          answer: "정답과 해설",
+        },
+        {
+          question: "기초 확인 문제 5",
+          answer: "정답과 해설",
+        },
+        {
+          question: "기초 확인 문제 6",
+          answer: "정답과 해설",
+        }
+      ],
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
-function safeJsonParse(value) {
-  if (!value) return null;
-  try {
-    return JSON.parse(value);
-  } catch {
-    return null;
-  }
-}
