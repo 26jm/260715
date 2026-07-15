@@ -308,14 +308,14 @@ generateBtn.addEventListener("click", async () => {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || "OpenAI 응답 처리에 실패했습니다.");
+      throw new Error(data.error || "AI 응답 처리에 실패했습니다.");
     }
 
     setResult(data, "cards");
   } catch (error) {
     setResult({
       error: error.message,
-      hint: "서버가 실행 중인지, OPENAI_API_KEY가 설정되어 있는지 확인하세요.",
+      hint: "서버가 실행 중인지, GEMINI_API_KEY가 설정되어 있는지 확인하세요.",
     });
   } finally {
     generateBtn.disabled = false;
