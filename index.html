@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>과외 도우미</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=SUIT:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <section class="hero card">
+      <div>
+        <span class="eyebrow">Private Tutor Productivity MVP</span>
+        <h1>과외 도우미</h1>
+        <p>
+          수업 메모를 가볍게 쌓고, 필요한 날짜만 선택해서
+          학생용 메시지, 학부모용 리포트, 다음 수업용 문제를 한 번에 만듭니다.
+        </p>
+      </div>
+      <div class="hero-badge">LocalStorage · JSON Output · One-Input, Three-Output</div>
+    </section>
+
+    <section class="grid">
+      <section class="card">
+        <div class="section-head">
+          <h2>수업 메모 입력</h2>
+          <p>수업이 끝날 때마다 빠르게 기록하세요.</p>
+        </div>
+
+        <form id="memoForm" class="form">
+          <label>
+            <span>날짜</span>
+            <input type="date" id="lessonDate" required />
+          </label>
+
+          <label>
+            <span>학생 이름</span>
+            <input type="text" id="studentName" placeholder="예: 김민준" required />
+          </label>
+
+          <label>
+            <span>진도</span>
+            <input type="text" id="progress" placeholder="예: 중등 수학 2-1 3단원" required />
+          </label>
+
+          <label>
+            <span>날것의 수업 메모</span>
+            <textarea id="lessonMemo" rows="6" placeholder="아이의 오답, 어려워한 개념, 반응 등을 자유롭게 적기" required></textarea>
+          </label>
+
+          <button type="submit" class="primary-btn">메모 저장</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <h2>저장된 메모</h2>
+          <p>체크박스로 여러 날짜를 선택하세요.</p>
+        </div>
+        <div id="memoList" class="memo-list"></div>
+      </section>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <h2>AI 통합 생성</h2>
+        <p>선택한 메모를 하나로 묶어 세 가지 결과물을 만듭니다.</p>
+      </div>
+
+      <div class="action-row">
+        <button id="generateBtn" class="primary-btn" type="button">AI 통합 생성</button>
+        <button id="clearSelectionBtn" class="secondary-btn" type="button">선택 해제</button>
+      </div>
+
+      <div class="format-note">
+        출력 형식은 학생용 메시지, 학부모용 리포트, 다음 수업용 문제/해설 JSON 구조를 따릅니다.
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <h2>생성 결과</h2>
+        <p>OpenAI 연동 후에는 실제 JSON 응답이 표시됩니다.</p>
+      </div>
+      <div id="resultView" class="result-view">
+        <pre id="resultBox" class="result-box">{}</pre>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
