@@ -1,8 +1,4 @@
 {
   "version": 2,
-  "routes": [
-    { "src": "/api/generate", "dest": "/api/generate.js" },
-    { "src": "/api/config", "dest": "/api/config.js" },
-    { "src": "/(.*)", "dest": "/index.html" }
-  ]
+  "cleanUrls": true
 }

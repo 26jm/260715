@@ -1,4 +1,4 @@
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method not allowed" });
     return;
@@ -25,64 +25,63 @@ export default async function handler(req, res) {
       )
       .join("\n\n");
 
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=" + encodeURIComponent(apiKey), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: [
-                  "너는 과외 선생님을 돕는 AI 비서야.",
-                  "아래 메모들을 분석해서 반드시 유효한 JSON만 반환해.",
-                  "한국어로 작성해.",
-                  "student_message는 친근하고 격려하는 톤의 카톡 메시지.",
-                  "parent_report는 정중하고 전문적인 데이터 중심 리포트.",
-                  "next_class_practice는 6~10개의 유사 문제와 상세 해설.",
-                  "",
-                  prompt,
-                ].join("\n"),
-              },
-            ],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.4,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "object",
-            additionalProperties: false,
-            properties: {
-              student_message: {
-                type: "string",
-              },
-              parent_report: {
-                type: "string",
-              },
-              next_class_practice: {
-                type: "array",
-                minItems: 6,
-                maxItems: 10,
-                items: {
-                  type: "object",
-                  additionalProperties: false,
-                  properties: {
-                    question: { type: "string" },
-                    answer: { type: "string" },
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=" + encodeURIComponent(apiKey),
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: [
+                    "너는 과외 선생님을 돕는 AI 비서야.",
+                    "아래 메모들을 분석해서 반드시 유효한 JSON만 반환해.",
+                    "한국어로 작성해.",
+                    "student_message는 친근하고 격려하는 톤의 카톡 메시지.",
+                    "parent_report는 정중하고 전문적인 데이터 중심 리포트.",
+                    "next_class_practice는 6~10개의 유사 문제와 상세 해설.",
+                    "",
+                    prompt,
+                  ].join("\n"),
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.4,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "object",
+              additionalProperties: false,
+              properties: {
+                student_message: { type: "string" },
+                parent_report: { type: "string" },
+                next_class_practice: {
+                  type: "array",
+                  minItems: 6,
+                  maxItems: 10,
+                  items: {
+                    type: "object",
+                    additionalProperties: false,
+                    properties: {
+                      question: { type: "string" },
+                      answer: { type: "string" },
+                    },
+                    required: ["question", "answer"],
                   },
-                  required: ["question", "answer"],
                 },
               },
+              required: ["student_message", "parent_report", "next_class_practice"],
             },
-            required: ["student_message", "parent_report", "next_class_practice"],
           },
-        },
-      }),
-    });
+        }),
+      }
+    );
 
     const data = await response.json();
 
@@ -106,7 +105,7 @@ export default async function handler(req, res) {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-}
+};
 
 function safeJsonParse(value) {
   if (!value) return null;
